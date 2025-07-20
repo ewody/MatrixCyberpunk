@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Background - Moins de Fondu</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const baseCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
+        const katakanaCharacters = 'アァカヵガgキクぐケヶコごサザシジスズセゼソゾタダチヂッツヅテデトドナrニヌネノハバパヒビピフブプヘベペホボポマミムメモャャlュュョョラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ーヽヾ';
+        const kanjiCharacters = '一二三四五六七八九十百千万億円会社情報電気東京日本世界人間科学技術言語';
+
+        const fontSize = 17; // Votre taille de police actuelle
+        const animationSpeed = 35; // Votre vitesse d'animation actuelle
+
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        const columnColors = []; // Stores the color for each column
+
+        // Define cyberpunk color palette with weights
+        const cyberpunkColors = [
+            { color: '#00FFFF', weight: 0.20 }, // Cyan/Aqua
+            { color: '#FF00FF', weight: 0.10 }, // Magenta/Fuchsia
+            { color: '#0000FF', weight: 0.01 }, // Blue
+            { color: '#FF0000', weight: 0.02 }  // Red (least common, for accents)
+        ];
+
+        // Pre-calculate cumulative weights for easier selection
+        let cumulativeWeight = 0;
+        for (let i = 0; i < cyberpunkColors.length; i++) {
+            cumulativeWeight += cyberpunkColors[i].weight;
+            cyberpunkColors[i].cumulative = cumulativeWeight;
+        }
+
+        function getRandomCyberpunkColor() {
+            const rand = Math.random() * cumulativeWeight;
+            for (let i = 0; i < cyberpunkColors.length; i++) {
+                if (rand < cyberpunkColors[i].cumulative) {
+                    return cyberpunkColors[i].color;
+                }
+            }
+            return cyberpunkColors[0].color; // Fallback, should not be reached
+        }
+
+        // Initialize drops and assign an initial color to each column
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+            columnColors[i] = getRandomCyberpunkColor(); // Assign a color to each column
+        }
+
+        function draw() {
+            // --- MODIFICATION ICI : Réduire la transparence de la couche noire ---
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.03)'; // Ancien : 0.05. Plus le nombre est petit, moins ça fond.
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = `${fontSize}px monospace`;
+
+            for (let i = 0; i < drops.length; i++) {
+                let text;
+                const randomCharChance = Math.random();
+
+                // Character selection logic
+                if (randomCharChance < 0.15) { 
+                    if (Math.random() < 0.7) { 
+                        text = katakanaCharacters.charAt(Math.floor(Math.random() * katakanaCharacters.length));
+                    } else {
+                        text = kanjiCharacters.charAt(Math.floor(Math.random() * kanjiCharacters.length));
+                    }
+                } else {
+                    text = baseCharacters.charAt(Math.floor(Math.random() * baseCharacters.length));
+                }
+                
+                // Set the fill style to the specific color assigned to this column
+                ctx.fillStyle = columnColors[i];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                    columnColors[i] = getRandomCyberpunkColor();
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, animationSpeed); // Utilisez votre vitesse d'animation existante
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const newColumns = canvas.width / fontSize;
+            drops.length = 0;
+            columnColors.length = 0;
+            for (let i = 0; i < newColumns; i++) {
+                drops[i] = 1;
+                columnColors[i] = getRandomCyberpunkColor();
+            }
+        });
+    </script>
+</body>
+</html>
